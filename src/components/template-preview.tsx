@@ -5,9 +5,10 @@ interface TemplatePreviewProps {
   templateData: TemplateData
   layoutName: string
   layoutSize: string
+  elementRotations: Record<string, number>
 }
 
-export function TemplatePreview({ elements, templateData, layoutName, layoutSize }: TemplatePreviewProps) {
+export function TemplatePreview({ elements, templateData, layoutName, layoutSize, elementRotations }: TemplatePreviewProps) {
   const renderElementContent = (element: TemplateElement) => {
     if (element.type === "image") {
       return element.content ? (
@@ -19,6 +20,22 @@ export function TemplatePreview({ elements, templateData, layoutName, layoutSize
         />
       ) : (
         <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">Image</div>
+      )
+    }
+
+    if (element.type === "horizontalRule") {
+      return (
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-[2px] bg-black"></div>
+        </div>
+      )
+    }
+
+    if (element.type === "verticalRule") {
+      return (
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="h-full w-[2px] bg-black"></div>
+        </div>
       )
     }
 
@@ -75,31 +92,35 @@ export function TemplatePreview({ elements, templateData, layoutName, layoutSize
     }
   }
 
+  console.log({elements})
   const canvasSize = getCanvasSize()
-  const scale = 0.8 // Scale down for preview
-
+  const scale = 1 // Scale down for preview
+  console.log({canvasSize})
   return (
-    <div className="flex-1 p-4 overflow-auto flex justify-center items-start min-h-0">
+    <div className="flex-1 p-4 overflow-auto flex justify-center items-start min-h-0 mt-[4.53rem]">
       <div className="relative">
         <div className="mb-2 text-xs text-gray-500 text-center">
           {layoutName} - Preview ({Math.round(canvasSize.width * scale)} x {Math.round(canvasSize.height * scale)}px)
         </div>
         <div
-          className="relative bg-white shadow-lg border"
-          style={{
-            width: `${canvasSize.width * scale}px`,
-            height: `${canvasSize.height * scale}px`,
-          }}
+            className="relative bg-white shadow-lg border focus:outline-none"
+            style={{
+              width: `${canvasSize.width * scale}px`,
+              height: `${canvasSize.height * scale}px`,
+            }}
         >
           {elements.map((element) => (
             <div
               key={element.id}
               className="absolute"
               style={{
-                left: `${element.position.x}px`,
-                top: `${element.position.y}px`,
+                left: `${element.position.x*scale}px`,
+                top: `${element.position.y*scale}px`,
                 width: `${element.size.width}px`,
                 height: `${element.size.height}px`,
+                transform: elementRotations[element.id] ? `rotate(${elementRotations[element.id]}deg)` : 'none',
+                transformOrigin: 'center center',
+                transition: 'left 0.2s ease-out, top 0.2s ease-out, transform 0.2s ease-out'
               }}
             >
               {renderElementContent(element)}

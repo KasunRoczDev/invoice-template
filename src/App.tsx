@@ -270,31 +270,57 @@ function App() {
   const [templateData, setTemplateData] = useState<TemplateData>(initialData)
   const [layoutName, setLayoutName] = useState("Waybill Layout")
   const [layoutSize, setLayoutSize] = useState("A4")
+  const [elementRotations, setElementRotations] = useState<Record<string, number>>({})
+
+  const rotateElement = (id: string, degrees: number) => {
+    setElementRotations(prev => ({
+      ...prev,
+      [id]: (prev[id] || 0) + degrees
+    }))
+  }
+
+  const addElement = (type: TemplateElement["type"], dataBinding?: string, content?: string) => {
+    const newElement: TemplateElement = {
+      id: `element-${Date.now()}`,
+      type,
+      content: content || (type === "text" ? "New Text" : type === "image" ? "" : "{{field}}"),
+      position: { x: 100 + elements.length * 20, y: 200 + elements.length * 20 }, // Offset new elements
+      size: { width: type === "image" ? 150 : 200, height: type === "image" ? 100 : 30 },
+      dataBinding: dataBinding || "",
+      styles: type === "text" ? { fontSize: "14px" } : {},
+    }
+    setElements([...elements, newElement])
+    setSelectedElement(newElement.id) // Auto-select new element
+  }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-white overflow-hidden">
       <div className="flex-1 flex flex-col min-w-0">
-        <Toolbar />
+        <Toolbar addElement={addElement} />
+        <hr/>
         <div className="flex-1 flex min-h-0">
           {/* Left Side - Preview */}
-          <div className="flex-1 bg-gray-100 min-w-0">
-            <div className="p-4 border-b bg-white">
-              <h2 className="text-lg font-semibold text-gray-800">Preview</h2>
-              <p className="text-sm text-gray-600">Live preview with example data</p>
+          <div className="flex-1 bg-white min-w-0">
+            <div className="p-4  bg-white">
+              <div className='bg-[#F5F8FB] p-4 flex justify-center items-center rounded-lg'>
+              <p className="text-[20px] font-bold text-[#0094FF]">Preview</p>
+              </div>
             </div>
             <TemplatePreview
               elements={elements}
               templateData={templateData}
               layoutName={layoutName}
               layoutSize={layoutSize}
+              elementRotations={elementRotations}
             />
           </div>
 
           {/* Right Side - Editor */}
-          <div className="flex-1 bg-white border-l min-w-0">
-            <div className="p-4 border-b">
-              <h2 className="text-lg font-semibold text-gray-800">Editor</h2>
-              <p className="text-sm text-gray-600">Drag and drop to design your template</p>
+          <div className="flex-1 bg-white  min-w-0">
+            <div className="p-4  bg-white">
+              <div className='bg-[#F5F8FB] p-4 flex justify-center items-center rounded-l-lg'>
+                <p className="text-[20px]  text-[#004385] font-bold">Layout </p>
+              </div>
             </div>
             <TemplateEditor
               elements={elements}
@@ -304,6 +330,9 @@ function App() {
               templateData={templateData}
               layoutName={layoutName}
               layoutSize={layoutSize}
+              elementRotations={elementRotations}
+              rotateElement={rotateElement}
+              addElement={addElement}
             />
           </div>
 
@@ -319,6 +348,7 @@ function App() {
             layoutSize={layoutSize}
             setLayoutSize={setLayoutSize}
             setSelectedElement={setSelectedElement}
+            addElement={addElement}
           />
         </div>
       </div>

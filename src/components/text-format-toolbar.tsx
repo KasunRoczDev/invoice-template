@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils"
 interface TextFormatToolbarProps {
   element: TemplateElement
   onUpdate: (updates: Partial<TemplateElement>) => void
+  addElement?: (type: TemplateElement["type"], dataBinding?: string, content?: string) => void
+  disabled?: boolean
 }
 
 const fontSizes = [
@@ -71,7 +73,7 @@ const colors = [
   "#FFFFFF",
 ]
 
-export function TextFormatToolbar({ element, onUpdate }: TextFormatToolbarProps) {
+export function TextFormatToolbar({ element, onUpdate, addElement, disabled }: TextFormatToolbarProps) {
   const styles = element.styles || {}
 
   const updateStyle = (key: string, value: string) => {
@@ -331,6 +333,21 @@ export function TextFormatToolbar({ element, onUpdate }: TextFormatToolbarProps)
           className="w-16 h-8"
         />
       </div>
+
+      {addElement && (
+        <>
+          <Separator orientation="vertical" className="h-6" />
+
+          {/* Line Element Button */}
+          <Button 
+            onClick={() => addElement("horizontalRule")}
+            variant="outline"
+            className="flex items-center gap-2 h-8"
+          >
+            <span className="text-lg">―</span>
+          </Button>
+        </>
+      )}
     </div>
   )
 }

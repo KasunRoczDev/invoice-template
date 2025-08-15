@@ -17,6 +17,7 @@ interface SidebarProps {
   layoutSize: string
   setLayoutSize: (size: string) => void
   setSelectedElement: (id: string | null) => void
+  addElement: (type: TemplateElement["type"], dataBinding?: string, content?: string) => void
 }
 
 export function Sidebar({
@@ -30,6 +31,7 @@ export function Sidebar({
   layoutSize,
   setLayoutSize,
   setSelectedElement,
+  addElement,
 }: SidebarProps) {
   const updateTemplateData = (section: keyof TemplateData, field: string, value: string | number) => {
     setTemplateData({
@@ -41,19 +43,20 @@ export function Sidebar({
     })
   }
 
-  const addElement = (type: TemplateElement["type"], dataBinding?: string, content?: string) => {
-    const newElement: TemplateElement = {
-      id: `element-${Date.now()}`,
-      type,
-      content: content || (type === "text" ? "New Text" : type === "image" ? "" : "{{field}}"),
-      position: { x: 100 + elements.length * 20, y: 200 + elements.length * 20 }, // Offset new elements
-      size: { width: type === "image" ? 150 : 200, height: type === "image" ? 100 : 30 },
-      dataBinding: dataBinding || "",
-      styles: type === "text" ? { fontSize: "14px" } : {},
+  const getValueFromDataBinding = (dataBinding: string): string => {
+    if (!dataBinding) return "";
+
+    const keys = dataBinding.split(".");
+    let value: any = templateData;
+
+    for (const key of keys) {
+      value = value?.[key];
     }
-    setElements([...elements, newElement])
-    setSelectedElement(newElement.id) // Auto-select new element
+
+    return value !== undefined ? String(value) : "";
   }
+
+
 
   const saveTemplate = async (isDefault: boolean) => {
     const serializedData = serializeTemplateForSave(layoutName, layoutSize, elements, templateData, false)
@@ -64,7 +67,52 @@ export function Sidebar({
       `Template "${serializedData.name}" ${isDefault ? "marked as default" : "saved"} successfully!\nCheck console for full data.`,
     )
   }
+  const updateOrAddImageElement = (dataBinding: string, imageBase64: string) => {
+    const existingIndex = elements.findIndex(el => el.type === "image" && el.dataBinding === dataBinding)
+    if (existingIndex !== -1) {
+      const updated = [...elements]
+      updated[existingIndex] = {
+        ...updated[existingIndex],
+        content: imageBase64,
+      }
+      setElements(updated)
+      setSelectedElement(updated[existingIndex].id)
+    } else {
+      addElement("image", dataBinding, imageBase64)
+    }
+  }
 
+  const handleLogoUpload = () => {
+    const input = document.createElement("input")
+    input.type = "file"
+    input.accept = "image/*"
+    input.onchange = (event: Event) => {
+      const file = (event.target as HTMLInputElement).files?.[0]
+      if (!file) return
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File size must be under 5MB")
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onload = () => {
+        const base64Image = reader.result as string
+        updateOrAddImageElement("businessDetails.logo", base64Image)
+      }
+      reader.readAsDataURL(file)
+    }
+    input.click()
+  }
+
+  const handleClear = () => {
+    const filteredElements = elements.filter(
+        (element) =>
+            element.id.includes("element-storemate-logo") ||
+            element.id.includes("element-powered-by")
+    );
+    setElements(filteredElements);
+  }
   return (
     <div className="w-72 bg-white border-l overflow-y-auto flex-shrink-0">
       <div className="p-4 space-y-4">
@@ -120,8 +168,8 @@ export function Sidebar({
                 📷
               </Badge>
               <button
-                onClick={() => addElement("image", "businessDetails.logo")}
-                className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
+                  onClick={handleLogoUpload}
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
               >
                 Logo
               </button>
@@ -144,9 +192,11 @@ export function Sidebar({
                 📍
               </Badge>
               <button
-                onClick={() =>
-                  addElement("text", "businessDetails.locationAddressCity", "{{businessDetails.locationAddressCity}}")
-                }
+                onClick={() => {
+                  const dataBinding = "businessDetails.locationAddressCity";
+                  const actualContent = getValueFromDataBinding(dataBinding);
+                  addElement("text", dataBinding, actualContent);
+                }}
                 className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
               >
                 Location Address & City
@@ -157,7 +207,11 @@ export function Sidebar({
                 📞
               </Badge>
               <button
-                onClick={() => addElement("text", "businessDetails.contactNumber", "{{businessDetails.contactNumber}}")}
+                onClick={() => {
+                  const dataBinding = "businessDetails.contactNumber";
+                  const actualContent = getValueFromDataBinding(dataBinding);
+                  addElement("text", dataBinding, actualContent);
+                }}
                 className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
               >
                 Contact Number
@@ -177,7 +231,11 @@ export function Sidebar({
                 #
               </Badge>
               <button
-                onClick={() => addElement("text", "waybillDetails.waybillNumber", "{{waybillDetails.waybillNumber}}")}
+                onClick={() => {
+                  const dataBinding = "waybillDetails.waybillNumber";
+                  const actualContent = getValueFromDataBinding(dataBinding);
+                  addElement("text", dataBinding, actualContent);
+                }}
                 className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
               >
                 Waybill Number
@@ -188,7 +246,11 @@ export function Sidebar({
                 📊
               </Badge>
               <button
-                onClick={() => addElement("text", "waybillDetails.waybillBarcode", "{{waybillDetails.waybillBarcode}}")}
+                onClick={() => {
+                  const dataBinding = "waybillDetails.waybillBarcode";
+                  const actualContent = getValueFromDataBinding(dataBinding);
+                  addElement("text", dataBinding, actualContent);
+                }}
                 className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
               >
                 Waybill Barcode
@@ -432,7 +494,7 @@ export function Sidebar({
             className="flex-1 bg-transparent"
             onClick={() => {
               if (confirm("Are you sure you want to clear all elements?")) {
-                setElements([])
+                handleClear()
                 setSelectedElement(null)
                 console.log("🗑️ Template cleared")
               }

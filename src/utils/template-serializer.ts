@@ -43,7 +43,6 @@ export function serializeTemplateForSave(
     size: layoutSize,
     elements: elements.map((element) => ({
       ...element,
-      // Clean up any temporary properties
       content: element.content,
       styles: element.styles || {},
     })),

@@ -53,7 +53,7 @@ export function Sidebar({
       styles: type === "text" ? { fontSize: "14px" } : {},
     }
     setElements([...elements, newElement])
-    setSelectedElement(newElement.id) // Auto-select new element
+    setSelectedElement(newElement.id)
   }
 
   const saveTemplate = async (isDefault: boolean) => {

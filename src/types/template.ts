@@ -1,6 +1,6 @@
 export interface TemplateElement {
   id: string
-  type: "text" | "image" | "field"
+  type: "text" | "image" | "field" | "horizontalRule" | "verticalRule"
   content: string
   position: { x: number; y: number }
   size: { width: number; height: number }
